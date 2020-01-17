@@ -12,7 +12,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 public class LazyName extends JPanel{
-	int width = 250, height = 250;
+	int width = 100, height = 100;
 	int ppg = 3;//pixels per gridspace
 	double dx = 0.9; //assuming square gridspaces
 	double dt = 0.5;
@@ -55,12 +55,13 @@ public class LazyName extends JPanel{
 			fluid.timeStep();
 			fluid.repaint();
 			frame.repaint();
-			//if(fluid.i < 900)
-				//fluid.saveImage();
-			//else
-			//	break;
+			
 			try {
-				Thread.sleep(0);
+				if(fluid.i < 900)
+					fluid.SavePaint();
+				else
+					break;
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -69,23 +70,21 @@ public class LazyName extends JPanel{
 	
 	int i = 0;
 	
-	private void saveImage(){
-	    BufferedImage imagebuf=null;
-	    try {
-	        imagebuf = new Robot().createScreenCapture(this.getBounds());
-	    } catch (AWTException e1) {
-	        // TODO Auto-generated catch block
-	        e1.printStackTrace();
-	    }  
-	     Graphics2D graphics2D = imagebuf.createGraphics();
-	     this.paint(graphics2D);
-	     try {
-	        ImageIO.write(imagebuf,"jpeg", new File("images/save" + i + ".jpeg"));
-	    } catch (Exception e) {
-	        // TODO Auto-generated catch block
-	        System.out.println("error");
-	    }
-	}
+	public void SavePaint()
+    {
+
+        try
+        {
+            BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics2D = image.createGraphics();
+            this.paint(graphics2D);
+            ImageIO.write(image,"jpg", new File("images/frame"+(i)+".jpg"));
+        }
+        catch(Exception exception)
+        {
+            //code
+        }
+    }
 	
 	int I(int x, int y)
 	{
@@ -250,7 +249,7 @@ public class LazyName extends JPanel{
 		{
 			//velXOld[I(width/2,height/2)] = 8*Math.sin(-time/10);
 		    //velYOld[I(width/2,height/2)] = 8*Math.cos(-time/10);
-			int r = 10*10;
+			int r = 50;
 			for(int dx = -r; dx < r; dx++)
 			{
 				for(int dy = -r; dy < r; dy++)
@@ -259,14 +258,16 @@ public class LazyName extends JPanel{
 					//if(dx == 0 && dy == 0)continue;
 					//velXOld[I(width/2+dx,height/2+dy)] = dx;
 				    //velYOld[I(width/2+dx,height/2+dy)] = dy;
-					//pOld[I(width/2+dx,(height-10)+dy)] = 50;
+					pOld[I(width/2+dx,(height-10)+dy)] = 50;
 					//tOld[I(width/2+dx+1,(height-3)+dy)] = 101;
 					int offset = (int) (10*Math.sin(time/5))*0;
-					gOld[I(width/2+dx,height-(20)+dy + offset)] = 50;
-					tOld[I(width/2+dx,height-(20)-2+dy + offset)] = 99;
+					
+					gOld[I(width/2+dx,20+dy + offset)] = 50;
+					tOld[I(width/2+dx,20+dy)] = 101;
+					tOld[I(width/2+dx,(height-10)+dy)] = 99;
 					if(dx*dx + dy*dy >= r/2) continue;
 					
-					levelOld[I(width/2+dx,height-(20)+dy+ offset)] = 100;
+					///levelOld[I(width/2+dx,height-(20)+dy+ offset)] = 100;
 					
 					//
 						
@@ -498,18 +499,17 @@ public class LazyName extends JPanel{
 	
 	@Override
 	protected void paintComponent(Graphics g) {
-		super.paintComponent(g);
 		for(int x = 0; x < width; x++)
 		{
 			for(int y = 0; y < height; y++)
 			{
-//				float p = (float) levelOld[I(x,y)];
-//				//p *= 5;
-//				p = (float) clamp(p,0,100);
+				float p = (float) pOld[I(x,y)];
+				//p *= 5;
+				p = (float) clamp(p,0,100);
 //				
-//				float pg = (float) gOld[I(x,y)];
-//				//pg *= 5;
-//				pg = (float) clamp(pg,0,100);
+				float pg = (float) gOld[I(x,y)];
+				//pg *= 5;
+				pg = (float) clamp(pg,0,100);
 //				pg = 0;
 //				
 				float vx = (float) velXOld[I(x,y)];
@@ -518,22 +518,9 @@ public class LazyName extends JPanel{
 				float vy = (float) velYOld[I(x,y)];
 				//vy = clamp(vy,-5,5);
 //				
-//				c = new Color(p/100,pg/100,0);
+				c = new Color(p/100,pg/100,0);
 				
 				float fire = (float) levelOld[I(x,y)];
-				
-				
-				
-				
-				if(fire <= 100) c = Color.WHITE;
-				if(fire <= 95) c = Color.ORANGE;
-				if(fire <= 50) c = Color.RED;
-				if(fire <= 25) c = Color.BLACK;
-				//p = (float) levelOld[I(x,y)];
-				//if(p <= 0) c = Color.BLUE.darker();
-				fire/= 2;
-				if(fire > 100) fire = 100;
-				//c = lerpC(Color.WHITE,Color.BLACK,fire/100);
 				
 				if(b[I(x,y)]) c = Color.DARK_GRAY;
 				g.setColor(c);
@@ -542,8 +529,8 @@ public class LazyName extends JPanel{
 				
 				int px = (int) (x*ppg + halfStep);
 				int py = (int) (y*ppg + halfStep);
-				g.setColor(Color.RED);
-				g.drawLine(px, py, px - (int)(vx*ppg/dx), py - (int)(vy*ppg/dx));
+				//g.setColor(Color.RED);
+				//g.drawLine(px, py, px - (int)(vx*ppg/dx), py - (int)(vy*ppg/dx));
 				//g.drawString(""+i, 10, 10);
 			}
 		}
